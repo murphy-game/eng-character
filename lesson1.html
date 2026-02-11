@@ -83,7 +83,6 @@
         .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c29a26; }
         .menu-icon { font-size: 2rem; margin-bottom: 5px; }
 
-        /* RWD 遊戲區域 */
         .game-section {
             background-image: url('assets/Gameplay Background.png');
             background-size: cover; background-position: center;
@@ -96,7 +95,6 @@
             position: relative; padding: 8px; box-sizing: border-box;
         }
 
-        /* 橫向模式優化 */
         @media (orientation: landscape) {
             .game-section { max-width: 850px; height: 92vh; }
             .menu-container { max-width: 700px; }
@@ -173,6 +171,14 @@
             flex: 1; min-width: 120px;
             display: flex; align-items: center; justify-content: center; gap: 5px;
         }
+        
+        /* 修正 Level 4 的 Next 按鈕過長問題 */
+        #next-q-btn {
+            flex: 0 0 auto; /* 不自動伸展 */
+            width: auto; 
+            min-width: 120px;
+        }
+
         .game-btn:active { transform: translateY(3px); box-shadow: none; }
         .btn-primary { background: var(--primary); }
         .btn-secondary { background: var(--secondary); }
@@ -378,6 +384,9 @@
         let orderQCount = 0;
         let currentAudio = null;
         let isLevel2Solved = false;
+        
+        // 用來儲存 modal 關閉後的 callback
+        let onModalCloseCallback = null;
 
         function playMp3(path) {
             if(currentAudio) {
@@ -389,7 +398,6 @@
             currentAudio.play().catch(e => console.log("Audio play failed:", e));
         }
 
-        // 音效播放
         function playGoodJob() {
             let audio = new Audio("assets/good_job.mp3");
             audio.play().catch(() => speakRobot("Good Job!"));
@@ -423,7 +431,13 @@
             const levelEl = document.getElementById(`level-${lv}`);
             levelEl.style.display = 'flex';
             
-            if(lv === 1) setTimeout(() => speakRobot("What's your name?"), 800);
+            // Level 1 開場白：延遲1秒
+            if(lv === 1) {
+                setTimeout(() => {
+                    let audio = new Audio("L1/whats_your_name.mp3");
+                    audio.play().catch(() => speakRobot("What's your name?"));
+                }, 1000);
+            }
             if(lv === 2) initListeningGame();
             if(lv === 3) initCanvas();
             if(lv === 4) initOrderingGame();
@@ -434,12 +448,14 @@
             document.getElementById('score').innerText = score;
         }
 
-        // 修改後的 showModal: 增加參數 ignoreAudio (Level 2 答對時不播放 Good Job)
-        function showModal(isSuccess, msg, playAudio = true) {
+        // 修改 showModal 增加 callback
+        function showModal(isSuccess, msg, playAudio = true, callback = null) {
             const modal = document.getElementById('feedback-modal');
             const img = document.getElementById('feedback-img');
             const txt = document.getElementById('feedback-msg');
             
+            onModalCloseCallback = callback; // 儲存 callback
+
             if(isSuccess) {
                 if(msg.includes("Mission")) img.src = "L1/treasure chest.png"; 
                 else img.src = "L1/star.png";
@@ -455,6 +471,11 @@
 
         function closeModal() {
             document.getElementById('feedback-modal').classList.remove('show-modal');
+            // 如果有關閉後的動作，執行它
+            if (onModalCloseCallback) {
+                onModalCloseCallback();
+                onModalCloseCallback = null; // 清空
+            }
         }
 
         // --- Level 1: Say Hello ---
@@ -471,7 +492,7 @@
             synth.speak(utterThis);
         }
 
-        // --- Level 2: Listening (邏輯修正) ---
+        // --- Level 2: Listening (流程修正) ---
         function initListeningGame() {
             isLevel2Solved = false;
             document.getElementById('play-sentence-btn').style.display = 'none';
@@ -494,7 +515,8 @@
                 grid.appendChild(card);
             });
 
-            setTimeout(() => { playTargetWord(); }, 1500);
+            // 縮短延遲至 0.8 秒
+            setTimeout(() => { playTargetWord(); }, 800);
         }
 
         function playTargetWord() {
@@ -508,38 +530,36 @@
         }
 
         function checkListeningAnswer(item, cardElement) {
-            // 如果已經答對，且點擊的是「非答案」卡片 -> 念出該卡片的單字 (單字點讀板功能)
             if (isLevel2Solved) {
                 if(item.word !== currentTargetWord.word) {
-                    playMp3(item.audio); // 播放被點擊的錯誤單字
+                    playMp3(item.audio); 
                 }
                 return;
             }
 
-            // 判斷對錯
             if (item.word === currentTargetWord.word) {
                 isLevel2Solved = true;
                 cardElement.classList.add('correct-anim');
                 
-                // 1. 跳星星，但不播 Good Job (參數 false)
-                showModal(true, "Correct!", false);
+                // 跳星星，關閉後才執行 callback
+                showModal(true, "Correct!", true, () => {
+                    // 這邊是按 OK 後才會執行的
+                    document.getElementById('target-word-text').innerText = item.word;
+                    document.getElementById('word-display-area').style.display = 'flex'; 
+                    document.getElementById('play-word-btn').style.display = 'none'; 
+                    document.getElementById('play-sentence-btn').style.display = 'flex';
+                    document.getElementById('next-listen-btn').style.display = 'flex';
+                    
+                    // 播放句子
+                    playTargetSentence();
+                });
+                
                 addScore(20);
 
-                // 2. UI 變化
-                document.getElementById('target-word-text').innerText = item.word;
-                document.getElementById('word-display-area').style.display = 'flex'; 
-                document.getElementById('play-word-btn').style.display = 'none'; 
-                document.getElementById('play-sentence-btn').style.display = 'flex';
-                document.getElementById('next-listen-btn').style.display = 'flex';
-
-                // 3. 延遲 0.5 秒後播放句子
-                setTimeout(() => { playTargetSentence(); }, 500);
-
             } else {
-                // 答錯：播放「被按錯的那個字」的聲音
                 playMp3(item.audio); 
                 cardElement.style.opacity = '0.5';
-                // 不跳視窗，只讓圖片變淡
+                showModal(false, "Try Again!");
             }
         }
 
@@ -606,7 +626,7 @@
             clearCanvas();
         }
 
-        // --- Level 4: Ordering (聲音修正) ---
+        // --- Level 4: Ordering (Big/Small 語音) ---
         function initOrderingGame() {
             orderQCount = 1;
             generateOrderQuestion();
@@ -643,8 +663,17 @@
                     if(userOrderInput.length < 3) {
                         userOrderInput.push(char); updateSlots();
                         btn.style.visibility = 'hidden'; checkOrder();
-                        // 恢復發音：使用機器人念字母 "A" (非 Apple)
-                        speakRobot(char);
+                        
+                        // 播放 "Big A" 或 "Small a"
+                        const isUpper = char === char.toUpperCase();
+                        const prefix = isUpper ? "big_" : "small_";
+                        const audioPath = `L1/${prefix}${char.toLowerCase()}.mp3`;
+                        
+                        // 嘗試播放檔案，失敗則用 Robot 念 "Big A"
+                        let audio = new Audio(audioPath);
+                        audio.play().catch(() => {
+                            speakRobot(isUpper ? "Big " + char : "Small " + char);
+                        });
                     }
                 };
                 pool.appendChild(btn);
