@@ -16,7 +16,7 @@
             width: 100%; height: 100%;
             margin: 0; padding: 0;
             overflow: hidden;
-            position: fixed; /* 保持鎖定，避免滑動網址列 */
+            position: fixed;
             user-select: none; -webkit-user-select: none;
             touch-action: none;
         }
@@ -54,11 +54,9 @@
         }
         #score-board img { width: 25px; height: 25px; }
 
-        /* 主選單 */
         .menu-container {
             display: flex; flex-direction: column; align-items: center; gap: 10px;
             width: 95%; max-width: 500px; z-index: 10;
-            transition: all 0.3s;
         }
 
         .exit-btn {
@@ -85,40 +83,24 @@
         .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c29a26; }
         .menu-icon { font-size: 2rem; margin-bottom: 5px; }
 
-        /* ★★★ 遊戲區域：預設直式設定 ★★★ */
+        /* RWD 遊戲區域 */
         .game-section {
             background-image: url('assets/Gameplay Background.png');
             background-size: cover; background-position: center;
             border-radius: 20px;
-            
             width: 96%; max-width: 600px; 
-            height: 85vh; max-height: 85dvh; /* 直式高度 */
-
+            height: 85vh; max-height: 85dvh; 
             border: 4px solid #fff;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: none; flex-direction: column; align-items: center;
             position: relative; padding: 8px; box-sizing: border-box;
-            transition: all 0.3s; /* 旋轉時有平滑效果 */
         }
 
-        /* ★★★ 橫向模式專用設定 (Landscape Mode) ★★★ */
+        /* 橫向模式優化 */
         @media (orientation: landscape) {
-            .game-section {
-                /* 橫向時放寬限制，像平板一樣 */
-                max-width: 850px; 
-                height: 92vh; /* 橫向時高度用滿一點，因為手機橫著很矮 */
-            }
-            .menu-container {
-                /* 主選單在橫向時也變寬 */
-                max-width: 700px;
-            }
-            .menu-grid {
-                /* 主選單變成 4 個一排，或者保持 2x2 但寬一點 */
-                grid-template-columns: repeat(4, 1fr);
-            }
-            #guide-robot {
-                width: 60px; /* 橫向時機器人縮小一點，避免擋路 */
-            }
+            .game-section { max-width: 850px; height: 92vh; }
+            .menu-container { max-width: 700px; }
+            .menu-grid { grid-template-columns: repeat(4, 1fr); }
         }
 
         .game-content {
@@ -162,16 +144,10 @@
         /* Level 2 */
         .listen-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
-            width: 100%; flex: 1; 
-            overflow-y: auto; padding: 5px;
-            align-content: start; 
+            width: 100%; flex: 1; overflow-y: auto; padding: 5px; align-content: start; 
         }
-        /* 橫向時 grid 改為 4 個一排 (如果有空間) 或是保持 2 個但變寬 */
         @media (orientation: landscape) and (min-width: 600px) {
-            .listen-grid {
-                grid-template-columns: repeat(4, 1fr); /* 平板/橫向手機模式 */
-                align-content: center; /* 垂直置中 */
-            }
+            .listen-grid { grid-template-columns: repeat(4, 1fr); align-content: center; }
         }
 
         .vocab-card {
@@ -217,13 +193,9 @@
         canvas {
             border: 3px dashed var(--wood); border-radius: 10px;
             cursor: crosshair; touch-action: none; background-color: #fff;
-            width: 100%; height: 200px;
-            margin: 10px 0;
+            width: 100%; height: 200px; margin: 10px 0;
         }
-        /* 橫向時，Canvas 高度稍微縮小，以免按鈕被擋住 */
-        @media (orientation: landscape) {
-            canvas { height: 160px; }
-        }
+        @media (orientation: landscape) { canvas { height: 160px; } }
 
         .letter-selector { margin-bottom: 5px; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
         .letter-btn {
@@ -417,6 +389,7 @@
             currentAudio.play().catch(e => console.log("Audio play failed:", e));
         }
 
+        // 音效播放
         function playGoodJob() {
             let audio = new Audio("assets/good_job.mp3");
             audio.play().catch(() => speakRobot("Good Job!"));
@@ -461,7 +434,8 @@
             document.getElementById('score').innerText = score;
         }
 
-        function showModal(isSuccess, msg) {
+        // 修改後的 showModal: 增加參數 ignoreAudio (Level 2 答對時不播放 Good Job)
+        function showModal(isSuccess, msg, playAudio = true) {
             const modal = document.getElementById('feedback-modal');
             const img = document.getElementById('feedback-img');
             const txt = document.getElementById('feedback-msg');
@@ -469,10 +443,11 @@
             if(isSuccess) {
                 if(msg.includes("Mission")) img.src = "L1/treasure chest.png"; 
                 else img.src = "L1/star.png";
-                playGoodJob();
+                
+                if(playAudio) playGoodJob();
             } else {
                 img.src = "assets/Encouragement.png";
-                playTryAgain();
+                if(playAudio) playTryAgain();
             }
             txt.innerText = msg;
             modal.classList.add('show-modal');
@@ -496,7 +471,7 @@
             synth.speak(utterThis);
         }
 
-        // --- Level 2: Listening ---
+        // --- Level 2: Listening (邏輯修正) ---
         function initListeningGame() {
             isLevel2Solved = false;
             document.getElementById('play-sentence-btn').style.display = 'none';
@@ -533,27 +508,38 @@
         }
 
         function checkListeningAnswer(item, cardElement) {
-            if(isLevel2Solved) return;
+            // 如果已經答對，且點擊的是「非答案」卡片 -> 念出該卡片的單字 (單字點讀板功能)
+            if (isLevel2Solved) {
+                if(item.word !== currentTargetWord.word) {
+                    playMp3(item.audio); // 播放被點擊的錯誤單字
+                }
+                return;
+            }
 
+            // 判斷對錯
             if (item.word === currentTargetWord.word) {
                 isLevel2Solved = true;
                 cardElement.classList.add('correct-anim');
                 
-                showModal(true, "Correct!");
+                // 1. 跳星星，但不播 Good Job (參數 false)
+                showModal(true, "Correct!", false);
                 addScore(20);
 
+                // 2. UI 變化
                 document.getElementById('target-word-text').innerText = item.word;
                 document.getElementById('word-display-area').style.display = 'flex'; 
                 document.getElementById('play-word-btn').style.display = 'none'; 
                 document.getElementById('play-sentence-btn').style.display = 'flex';
                 document.getElementById('next-listen-btn').style.display = 'flex';
 
-                setTimeout(() => { playTargetSentence(); }, 1500);
+                // 3. 延遲 0.5 秒後播放句子
+                setTimeout(() => { playTargetSentence(); }, 500);
 
             } else {
-                playMp3(currentTargetWord.audio); 
+                // 答錯：播放「被按錯的那個字」的聲音
+                playMp3(item.audio); 
                 cardElement.style.opacity = '0.5';
-                showModal(false, "Try Again!");
+                // 不跳視窗，只讓圖片變淡
             }
         }
 
@@ -620,7 +606,7 @@
             clearCanvas();
         }
 
-        // --- Level 4: Ordering ---
+        // --- Level 4: Ordering (聲音修正) ---
         function initOrderingGame() {
             orderQCount = 1;
             generateOrderQuestion();
@@ -657,7 +643,8 @@
                     if(userOrderInput.length < 3) {
                         userOrderInput.push(char); updateSlots();
                         btn.style.visibility = 'hidden'; checkOrder();
-                        // 移除點擊發音
+                        // 恢復發音：使用機器人念字母 "A" (非 Apple)
+                        speakRobot(char);
                     }
                 };
                 pool.appendChild(btn);
