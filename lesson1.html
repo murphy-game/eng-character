@@ -15,20 +15,22 @@
         html, body {
             width: 100%; height: 100%;
             margin: 0; padding: 0;
-            overflow: hidden;
-            position: fixed;
+            overflow: hidden; /* 禁止捲動 */
+            position: fixed; /* 鎖定位置 */
             user-select: none; -webkit-user-select: none;
             touch-action: none;
         }
 
         body {
-            font-family: "Comic Sans MS", "BiauKai", sans-serif;
-            background-image: url('assets/Map.png'); /* 共用背景 */
+            /* 字體設定：優先使用手寫風格，解決 a 的寫法問題 */
+            font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif;
+            background-image: url('assets/Map.png');
             background-size: cover;
             background-position: center;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
+        /* 背景遮罩 */
         .overlay-bg {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255, 255, 255, 0.3);
@@ -39,169 +41,187 @@
         h1 { 
             color: #2f3640; 
             text-shadow: 2px 2px #fff, 0 0 10px rgba(255,255,255,0.8); 
-            margin: 10px 0; font-size: 2rem; text-align: center; z-index: 10;
+            margin: 5px 0 10px 0; font-size: 1.8rem; text-align: center; z-index: 10;
         }
         
+        /* 計分板：靠右縮進，避免被手機邊緣切到 */
         #score-board {
-            position: absolute; top: 15px; right: 15px;
-            background: rgba(255,255,255,0.95); padding: 5px 15px;
+            position: absolute; top: 10px; right: 15px;
+            background: rgba(255,255,255,0.95); padding: 5px 12px;
             border-radius: 50px; font-weight: bold; color: #fbc531;
             border: 3px solid var(--wood);
             box-shadow: 0 4px 0 rgba(0,0,0,0.2);
             z-index: 100;
             display: flex; align-items: center; gap: 5px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
-        #score-board img { width: 30px; height: 30px; }
+        #score-board img { width: 25px; height: 25px; }
 
         .menu-container {
             display: flex; flex-direction: column; align-items: center; gap: 10px;
-            width: 90%; max-width: 500px; z-index: 10;
+            width: 95%; max-width: 500px; z-index: 10;
         }
 
-        /* 回地圖按鈕 */
         .exit-btn {
-            padding: 10px 25px; background: var(--danger); color: white;
+            padding: 8px 20px; background: var(--danger); color: white;
             border: 3px solid #d63031; border-radius: 50px;
-            font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            font-size: 1rem; font-weight: bold; cursor: pointer;
             box-shadow: 0 4px 0 #b71540; text-decoration: none;
             display: flex; align-items: center; gap: 5px;
         }
         .exit-btn:active { transform: translateY(4px); box-shadow: none; }
 
         .menu-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;
         }
         .menu-btn {
             background: rgba(255, 255, 255, 0.9); 
             border: 4px solid var(--wood);
-            border-radius: 25px; padding: 15px;
-            font-size: 1.2rem; cursor: pointer; color: #333;
+            border-radius: 20px; padding: 10px;
+            font-size: 1.1rem; cursor: pointer; color: #333;
             display: flex; flex-direction: column; align-items: center;
             transition: transform 0.1s;
-            box-shadow: 0 6px 0 #c29a26;
+            box-shadow: 0 5px 0 #c29a26;
         }
         .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c29a26; }
-        .menu-icon { font-size: 2.5rem; margin-bottom: 5px; }
+        .menu-icon { font-size: 2rem; margin-bottom: 5px; }
 
+        /* ★★★ 遊戲區域 RWD 設定 ★★★ */
         .game-section {
             background-image: url('assets/Gameplay Background.png');
             background-size: cover; background-position: center;
             border-radius: 20px;
-            width: 95%; max-width: 700px; height: 90%;
-            border: 5px solid #fff;
+            
+            /* 電腦版寬度限制 */
+            width: 96%; max-width: 600px; 
+            /* 高度自適應，避免手機鍵盤彈出遮擋 */
+            height: 90vh; max-height: 800px;
+
+            border: 4px solid #fff;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: none; flex-direction: column; align-items: center;
-            position: relative; padding: 10px; box-sizing: border-box;
+            position: relative; padding: 8px; box-sizing: border-box;
         }
 
         .game-content {
-            background: rgba(255,255,255,0.85);
-            border-radius: 15px; padding: 15px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px; padding: 10px;
             width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            overflow-y: auto;
+            overflow-y: auto; box-sizing: border-box;
         }
 
         #guide-robot {
-            position: absolute; bottom: -10px; left: -10px;
-            width: 100px; height: auto;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));
+            position: absolute; bottom: -5px; left: -5px;
+            width: 80px; height: auto;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.8));
             pointer-events: none; z-index: 50;
         }
 
         .back-btn {
-            position: absolute; top: 15px; left: 15px;
+            position: absolute; top: 10px; left: 10px;
             background: var(--danger); color: white; border: none;
-            padding: 8px 15px; border-radius: 50px; cursor: pointer;
-            font-size: 1rem; font-weight: bold;
+            padding: 5px 12px; border-radius: 50px; cursor: pointer;
+            font-size: 0.9rem; font-weight: bold;
             box-shadow: 0 3px 0 #d63031; z-index: 50;
         }
         .back-btn:active { transform: translateY(3px); box-shadow: none; }
 
-        h2 { margin: 5px 0 15px 0; color: #2d3436; text-align: center; }
+        h2 { margin: 5px 0 10px 0; color: #2d3436; text-align: center; font-size: 1.5rem; }
 
-        /* Level 1 */
-        .big-text { font-size: 2rem; color: #2c3e50; margin: 20px 0; font-weight: bold; }
+        /* Level 1 Styles */
+        .big-text { font-size: 1.8rem; color: #2c3e50; margin: 15px 0; font-weight: bold; }
         #name-input { 
-            font-size: 1.5rem; padding: 10px; width: 80%; 
+            font-size: 1.3rem; padding: 8px; width: 70%; 
             border: 3px solid var(--primary); border-radius: 15px; text-align: center; outline: none;
         }
         .mic-btn {
-            font-size: 3rem; background: white; border: 3px solid #eee; border-radius: 50%;
-            cursor: pointer; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); animation: pulse 2s infinite;
+            font-size: 2.5rem; background: white; border: 3px solid #eee; border-radius: 50%;
+            cursor: pointer; width: 70px; height: 70px; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1); animation: pulse 2s infinite;
         }
 
-        /* Level 2 */
+        /* Level 2 Styles */
         .listen-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
-            width: 100%; height: 100%; overflow-y: auto; padding-bottom: 20px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+            width: 100%; overflow-y: auto; padding: 5px; flex: 1;
         }
         .vocab-card {
-            background: #fff; border-radius: 15px;
-            padding: 10px; cursor: pointer;
+            background: #fff; border-radius: 12px;
+            padding: 5px; cursor: pointer;
             display: flex; justify-content: center; align-items: center;
-            border: 3px solid #dfe6e9; box-shadow: 0 4px 0 #b2bec3;
+            border: 2px solid #dfe6e9; box-shadow: 0 3px 0 #b2bec3;
             transition: all 0.1s; aspect-ratio: 1/1; 
         }
-        .vocab-card img { width: 90%; height: 90%; object-fit: contain; }
-        .vocab-card:active { transform: translateY(4px); box-shadow: none; }
+        .vocab-card img { width: 85%; height: 85%; object-fit: contain; }
+        .vocab-card:active { transform: translateY(3px); box-shadow: none; }
         .correct-anim { border-color: var(--secondary) !important; background: #dff9fb; animation: bounce 0.5s; }
         
-        .next-btn-style {
-            display:none; margin-top:10px; font-size:1.2rem; 
-            background:var(--wood); color:white; border:none; 
-            padding:10px 20px; border-radius:10px; cursor: pointer;
-            box-shadow: 0 4px 0 #b78e1b;
+        .control-panel {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; width: 100%;
         }
-        .next-btn-style:active { transform: translateY(4px); box-shadow: none; }
 
-        /* Level 3 */
-        canvas {
-            border: 4px dashed var(--wood); border-radius: 15px;
-            cursor: crosshair; touch-action: none; background-color: #fff;
-            width: 100%; height: 250px;
+        .game-btn {
+            font-size: 1rem; padding: 8px 15px; 
+            border: none; border-radius: 10px; color: white; cursor: pointer;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+            flex: 1; min-width: 100px; max-width: 150px;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
         }
-        .letter-selector { margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+        .game-btn:active { transform: translateY(3px); box-shadow: none; }
+        .btn-primary { background: var(--primary); }
+        .btn-secondary { background: var(--secondary); }
+        .btn-wood { background: var(--wood); }
+        .btn-danger { background: var(--danger); }
+
+        /* Level 3 Styles */
+        canvas {
+            border: 3px dashed var(--wood); border-radius: 10px;
+            cursor: crosshair; touch-action: none; background-color: #fff;
+            width: 100%; height: 200px;
+            margin: 10px 0;
+        }
+        .letter-selector { margin-bottom: 5px; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
         .letter-btn {
-            font-size: 1.2rem; padding: 5px 12px;
-            background: #fff; border: 2px solid var(--primary); border-radius: 10px; cursor: pointer;
+            font-size: 1.1rem; padding: 5px 10px;
+            background: #fff; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer;
+            font-family: "Comic Sans MS", cursive;
         }
         .letter-btn.active { background: var(--primary); color: white; }
 
-        /* Level 4 */
+        /* Level 4 Styles */
         .train-container {
-            display: flex; gap: 8px; margin: 10px 0; min-height: 60px;
-            background: rgba(129, 236, 236, 0.5); padding: 10px; border-radius: 15px; width: 100%;
+            display: flex; gap: 5px; margin: 8px 0; min-height: 50px;
+            background: rgba(129, 236, 236, 0.5); padding: 8px; border-radius: 12px; width: 100%;
             justify-content: center; align-items: center;
         }
         .letter-bubble {
-            width: 50px; height: 50px; background: white;
-            border-radius: 50%; border: 3px solid var(--wood);
+            width: 45px; height: 45px; background: white;
+            border-radius: 50%; border: 2px solid var(--wood);
             display: flex; justify-content: center; align-items: center;
-            font-size: 1.5rem; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 0 #b78e1b; color: #333;
+            font-size: 1.4rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 3px 0 #b78e1b; color: #333;
+            font-family: "Comic Sans MS", cursive;
         }
-        .letter-bubble:active { transform: translateY(4px); box-shadow: none; }
-        .slot { width: 50px; height: 50px; border: 3px dashed #b2bec3; border-radius: 50%; }
+        .letter-bubble:active { transform: translateY(3px); box-shadow: none; }
+        .slot { width: 45px; height: 45px; border: 2px dashed #b2bec3; border-radius: 50%; }
 
         /* Modal */
         #feedback-modal {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            background: white; padding: 20px; border-radius: 20px;
+            background: white; padding: 15px; border-radius: 20px;
             border: 5px solid var(--wood); text-align: center; z-index: 200;
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            width: 70%;
+            width: 80%; max-width: 300px;
         }
-        #feedback-img { width: 120px; height: auto; margin-bottom: 10px; }
+        #feedback-img { width: 100px; height: auto; margin-bottom: 10px; }
         .show-modal { transform: translate(-50%, -50%) scale(1) !important; }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .feedback-text { color: var(--secondary); font-size: 1.2rem; font-weight: bold; min-height: 25px; margin-top: 5px; text-align: center; }
+        .feedback-text { color: var(--secondary); font-size: 1.1rem; font-weight: bold; min-height: 20px; margin-top: 5px; text-align: center; }
     </style>
 </head>
 <body>
@@ -213,7 +233,7 @@
         <span id="score">0</span>
     </div>
     
-    <h1>Magic Forest Expedition</h1>
+    <h1>Magic Forest</h1>
 
     <div id="main-menu" class="menu-container">
         <button onclick="window.location.href='index.html'" class="exit-btn">
@@ -243,7 +263,7 @@
     <div id="feedback-modal">
         <img id="feedback-img" src="L1/star.png">
         <h2 id="feedback-msg">Good Job!</h2>
-        <button onclick="closeModal()" style="padding:10px 30px; border-radius:20px; border:none; background:var(--primary); color:white; font-size:1.2rem;">OK</button>
+        <button onclick="closeModal()" style="padding:8px 25px; border-radius:20px; border:none; background:var(--primary); color:white; font-size:1.1rem;">OK</button>
     </div>
 
     <div id="level-1" class="game-section">
@@ -251,10 +271,10 @@
         <button class="back-btn" onclick="goHome()">🏠 Menu</button>
         <div class="game-content">
             <h2>Let's Introduce!</h2>
-            <input type="text" id="name-input" placeholder="Name (e.g. Tom)" value="Baby">
+            <input type="text" id="name-input" placeholder="Name" value="Baby">
             <div class="big-text" id="sentence-display">Hi, I'm ________.</div>
             <button class="mic-btn" onclick="speakSentence()">🎙️</button>
-            <p>Tap mic & repeat!</p>
+            <p>Tap mic, listen & repeat!</p>
         </div>
     </div>
 
@@ -263,10 +283,21 @@
         <button class="back-btn" onclick="goHome()">🏠 Menu</button>
         <div class="game-content">
             <h2>Find the Picture</h2>
-            <button id="play-sound-btn" onclick="playTargetWord()" style="font-size:1.2rem; padding:8px 20px; background:var(--primary); border:none; border-radius:10px; color:white; cursor:pointer; margin-bottom:10px;">🔊 Play Word</button>
+            
             <div class="listen-grid" id="vocab-grid"></div>
             <div id="vocab-feedback" class="feedback-text"></div>
-            <button onclick="nextListeningQuestion()" id="next-listen-btn" class="next-btn-style">Next ➡</button>
+            
+            <div class="control-panel">
+                <button id="play-word-btn" class="game-btn btn-primary" onclick="playTargetWord()">
+                    🔊 Word
+                </button>
+                <button id="play-sentence-btn" class="game-btn btn-secondary" onclick="playTargetSentence()" style="display:none;">
+                    🗣️ Sentence
+                </button>
+                <button id="next-listen-btn" class="game-btn btn-wood" onclick="nextListeningQuestion()" style="display:none;">
+                    Next ➡
+                </button>
+            </div>
         </div>
     </div>
 
@@ -284,10 +315,10 @@
                 <button class="letter-btn" onclick="setTraceLetter('D')">D</button>
                 <button class="letter-btn" onclick="setTraceLetter('d')">d</button>
             </div>
-            <canvas id="drawCanvas" width="300" height="250"></canvas>
-            <div style="margin-top:10px;">
-                <button onclick="clearCanvas()" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:5px; margin-right:10px;">🗑️ Clear</button>
-                <button onclick="checkWriting()" style="background:var(--secondary); color:white; border:none; padding:8px 15px; border-radius:5px;">✨ Done</button>
+            <canvas id="drawCanvas" width="300" height="200"></canvas>
+            <div class="control-panel">
+                <button onclick="clearCanvas()" class="game-btn btn-danger">🗑️ Clear</button>
+                <button onclick="checkWriting()" class="game-btn btn-secondary">✨ Done</button>
             </div>
         </div>
     </div>
@@ -301,7 +332,7 @@
             <div id="train-slots" class="train-container"></div>
             <div id="letter-pool" class="train-container" style="background:transparent; border:none;"></div>
             <div id="order-feedback" class="feedback-text"></div>
-            <button onclick="nextOrderQuestion()" id="next-q-btn" class="next-btn-style">Next ➡</button>
+            <button onclick="nextOrderQuestion()" id="next-q-btn" class="game-btn btn-wood" style="display:none; margin-top:10px;">Next ➡</button>
         </div>
     </div>
 
@@ -334,8 +365,20 @@
                 currentAudio.currentTime = 0;
             }
             currentAudio = new Audio(path);
-            currentAudio.playbackRate = 0.9; // MP3 速度 0.9
+            currentAudio.playbackRate = 0.9; 
             currentAudio.play().catch(e => console.log("Audio play failed:", e));
+        }
+
+        // 嘗試播放 good_job.mp3 (assets)，失敗則用 Robot
+        function playGoodJob() {
+            let audio = new Audio("assets/good_job.mp3");
+            audio.play().catch(() => speakRobot("Good Job!"));
+        }
+
+        // 嘗試播放 try_again.mp3 (assets)
+        function playTryAgain() {
+            let audio = new Audio("assets/try_again.mp3");
+            audio.play().catch(() => speakRobot("Try Again"));
         }
 
         const synth = window.speechSynthesis;
@@ -343,14 +386,14 @@
             if (synth.speaking) synth.cancel();
             const utterThis = new SpeechSynthesisUtterance(text);
             utterThis.lang = 'en-US'; 
-            utterThis.rate = 0.5; // 機器人速度 0.5
+            utterThis.rate = 0.5;
             utterThis.pitch = 1.1;
             synth.speak(utterThis);
         }
 
         function goHome() {
             document.querySelectorAll('.game-section').forEach(el => el.style.display = 'none');
-            document.getElementById('main-menu').style.display = 'flex'; // 修正為 flex 以對齊
+            document.getElementById('main-menu').style.display = 'flex';
             document.querySelector('.overlay-bg').style.display = 'block';
             document.body.style.backgroundImage = "url('assets/Map.png')";
             if(currentAudio) currentAudio.pause();
@@ -382,10 +425,10 @@
             if(isSuccess) {
                 if(msg.includes("Mission")) img.src = "L1/treasure chest.png"; 
                 else img.src = "L1/star.png";
-                speakRobot(msg); 
+                playGoodJob();
             } else {
                 img.src = "assets/Encouragement.png";
-                speakRobot("Try again");
+                playTryAgain();
             }
             txt.innerText = msg;
             modal.classList.add('show-modal');
@@ -400,20 +443,30 @@
             const name = document.getElementById('name-input').value;
             const fullSentence = `Hi, I'm ${name}.`;
             document.getElementById('sentence-display').innerText = fullSentence;
-            speakRobot(fullSentence);
-            setTimeout(() => {
-                showModal(true, "Great Speaking!");
-                addScore(10);
-            }, 2500);
+
+            if (synth.speaking) synth.cancel();
+            const utterThis = new SpeechSynthesisUtterance(fullSentence);
+            utterThis.lang = 'en-US';
+            utterThis.rate = 0.5;
+            utterThis.pitch = 1.1;
+
+            utterThis.onend = function() {
+                setTimeout(() => {
+                    showModal(true, "Great Speaking!");
+                    addScore(10);
+                }, 4000); 
+            };
+            synth.speak(utterThis);
         }
 
         // --- Level 2: Listening ---
         function initListeningGame() {
             isLevel2Solved = false;
+            document.getElementById('play-sentence-btn').style.display = 'none';
             document.getElementById('next-listen-btn').style.display = 'none';
-            const soundBtn = document.getElementById('play-sound-btn');
-            soundBtn.innerText = "🔊 Play Word";
-            soundBtn.style.background = "var(--primary)";
+            document.getElementById('play-word-btn').classList.remove('btn-secondary');
+            document.getElementById('play-word-btn').classList.add('btn-primary');
+            document.getElementById('vocab-feedback').innerText = "";
 
             const grid = document.getElementById('vocab-grid');
             grid.innerHTML = '';
@@ -429,16 +482,18 @@
                 card.onclick = () => checkListeningAnswer(item, card);
                 grid.appendChild(card);
             });
-            document.getElementById('vocab-feedback').innerText = "Tap 'Play Word'";
+
+            setTimeout(() => { playTargetWord(); }, 1000);
         }
 
         function playTargetWord() {
             if(!currentTargetWord) return;
-            if(isLevel2Solved) {
-                playMp3(currentTargetWord.sentAudio);
-            } else {
-                playMp3(currentTargetWord.audio);
-            }
+            playMp3(currentTargetWord.audio);
+        }
+
+        function playTargetSentence() {
+            if(!currentTargetWord) return;
+            playMp3(currentTargetWord.sentAudio);
         }
 
         function checkListeningAnswer(item, cardElement) {
@@ -447,15 +502,15 @@
             if (item.word === currentTargetWord.word) {
                 isLevel2Solved = true;
                 cardElement.classList.add('correct-anim');
-                playMp3(item.sentAudio); 
-                document.getElementById('vocab-feedback').innerText = "Correct! Listen Again?";
                 
-                const soundBtn = document.getElementById('play-sound-btn');
-                soundBtn.innerText = "🗣️ Play Sentence";
-                soundBtn.style.background = "var(--secondary)";
-                
+                showModal(true, "Correct!");
                 addScore(20);
-                document.getElementById('next-listen-btn').style.display = 'block';
+
+                document.getElementById('play-sentence-btn').style.display = 'flex';
+                document.getElementById('next-listen-btn').style.display = 'flex';
+                document.getElementById('vocab-feedback').innerText = item.sentence;
+
+                setTimeout(() => { playTargetSentence(); }, 1500);
 
             } else {
                 playMp3(currentTargetWord.audio); 
@@ -515,7 +570,7 @@
         function drawGuide(char) {
             ctx.save();
             const rect = canvas.getBoundingClientRect();
-            ctx.font = `${rect.height * 0.7}px Arial`;
+            ctx.font = `${rect.height * 0.7}px "Comic Sans MS", "Chalkboard SE", sans-serif`;
             ctx.fillStyle = "#dfe6e9"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
             ctx.fillText(char, rect.width/2, rect.height/2);
             ctx.restore();
@@ -565,7 +620,8 @@
                     if(userOrderInput.length < 3) {
                         userOrderInput.push(char); updateSlots();
                         btn.style.visibility = 'hidden'; checkOrder();
-                        playMp3(`L1/phonics_${char.toLowerCase()}.mp3`);
+                        // ★★★ 這裡改成播放單純的字母語音 (Robot: "A") ★★★
+                        speakRobot(char);
                     }
                 };
                 pool.appendChild(btn);
