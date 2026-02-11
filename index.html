@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Murphy's English Adventure</title>
+    <style>
+        :root {
+            --primary: #8c7ae6;
+            --wood: #e1b12c;
+        }
+        body {
+            font-family: "Comic Sans MS", "BiauKai", sans-serif;
+            background-image: url('assets/Map.png'); /* 共用背景 */
+            background-size: cover;
+            background-position: center;
+            margin: 0; padding: 0;
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        /* 遮罩讓字清楚點 */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(3px); z-index: -1;
+        }
+        
+        h1 {
+            color: #2f3640; font-size: 2.5rem; text-align: center;
+            text-shadow: 2px 2px #fff; margin-bottom: 30px;
+        }
+
+        .lesson-container {
+            display: flex; flex-direction: column; gap: 20px;
+            width: 90%; max-width: 400px;
+        }
+
+        .lesson-btn {
+            background: white;
+            border: 4px solid var(--wood);
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 1.5rem;
+            color: #333;
+            text-decoration: none; /* 去除底線 */
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 5px 0 #c29a26;
+            transition: transform 0.1s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .lesson-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c29a26; }
+
+        /* 鎖住的關卡樣式 */
+        .locked {
+            background: #dfe6e9; border-color: #b2bec3; color: #636e72;
+            box-shadow: none; pointer-events: none; /* 禁止點擊 */
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <h1>🎒 英語探險地圖</h1>
+
+    <div class="lesson-container">
+        <a href="lesson1.html" class="lesson-btn">
+            🟢 Lesson 1
+        </a>
+
+        <div class="lesson-btn locked">
+            🔒 Lesson 2 (製作中...)
+        </div>
+        
+        <div class="lesson-btn locked">
+            🔒 更多關卡陸續新增...
+        </div>
+    </div>
+
+</body>
+</html>
