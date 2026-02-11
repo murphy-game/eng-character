@@ -172,12 +172,8 @@
             display: flex; align-items: center; justify-content: center; gap: 5px;
         }
         
-        /* 修正 Level 4 的 Next 按鈕過長問題 */
-        #next-q-btn {
-            flex: 0 0 auto; /* 不自動伸展 */
-            width: auto; 
-            min-width: 120px;
-        }
+        /* 修正 Level 4 Next 按鈕寬度 */
+        #next-q-btn { flex: 0 0 auto; width: auto; min-width: 120px; }
 
         .game-btn:active { transform: translateY(3px); box-shadow: none; }
         .btn-primary { background: var(--primary); }
@@ -385,7 +381,6 @@
         let currentAudio = null;
         let isLevel2Solved = false;
         
-        // 用來儲存 modal 關閉後的 callback
         let onModalCloseCallback = null;
 
         function playMp3(path) {
@@ -431,7 +426,7 @@
             const levelEl = document.getElementById(`level-${lv}`);
             levelEl.style.display = 'flex';
             
-            // Level 1 開場白：延遲1秒
+            // Level 1: 自動播放開場白 (檔名務必正確: whats_your_name.mp3)
             if(lv === 1) {
                 setTimeout(() => {
                     let audio = new Audio("L1/whats_your_name.mp3");
@@ -448,13 +443,12 @@
             document.getElementById('score').innerText = score;
         }
 
-        // 修改 showModal 增加 callback
         function showModal(isSuccess, msg, playAudio = true, callback = null) {
             const modal = document.getElementById('feedback-modal');
             const img = document.getElementById('feedback-img');
             const txt = document.getElementById('feedback-msg');
             
-            onModalCloseCallback = callback; // 儲存 callback
+            onModalCloseCallback = callback;
 
             if(isSuccess) {
                 if(msg.includes("Mission")) img.src = "L1/treasure chest.png"; 
@@ -471,10 +465,9 @@
 
         function closeModal() {
             document.getElementById('feedback-modal').classList.remove('show-modal');
-            // 如果有關閉後的動作，執行它
             if (onModalCloseCallback) {
                 onModalCloseCallback();
-                onModalCloseCallback = null; // 清空
+                onModalCloseCallback = null; 
             }
         }
 
@@ -492,7 +485,7 @@
             synth.speak(utterThis);
         }
 
-        // --- Level 2: Listening (流程修正) ---
+        // --- Level 2: Listening (Sound Clash Fixed) ---
         function initListeningGame() {
             isLevel2Solved = false;
             document.getElementById('play-sentence-btn').style.display = 'none';
@@ -515,7 +508,7 @@
                 grid.appendChild(card);
             });
 
-            // 縮短延遲至 0.8 秒
+            // 縮短等待時間至 0.8秒
             setTimeout(() => { playTargetWord(); }, 800);
         }
 
@@ -530,6 +523,7 @@
         }
 
         function checkListeningAnswer(item, cardElement) {
+            // 單字點讀板功能
             if (isLevel2Solved) {
                 if(item.word !== currentTargetWord.word) {
                     playMp3(item.audio); 
@@ -541,25 +535,24 @@
                 isLevel2Solved = true;
                 cardElement.classList.add('correct-anim');
                 
-                // 跳星星，關閉後才執行 callback
+                // 1. 跳星星視窗，按OK後才執行 callback (播放句子)
                 showModal(true, "Correct!", true, () => {
-                    // 這邊是按 OK 後才會執行的
                     document.getElementById('target-word-text').innerText = item.word;
                     document.getElementById('word-display-area').style.display = 'flex'; 
                     document.getElementById('play-word-btn').style.display = 'none'; 
                     document.getElementById('play-sentence-btn').style.display = 'flex';
                     document.getElementById('next-listen-btn').style.display = 'flex';
                     
-                    // 播放句子
+                    // 按下OK後，才開始播放句子
                     playTargetSentence();
                 });
                 
                 addScore(20);
 
             } else {
+                // 答錯：只播錯誤單字，不跳視窗，不播 Try Again
                 playMp3(item.audio); 
                 cardElement.style.opacity = '0.5';
-                showModal(false, "Try Again!");
             }
         }
 
@@ -669,7 +662,6 @@
                         const prefix = isUpper ? "big_" : "small_";
                         const audioPath = `L1/${prefix}${char.toLowerCase()}.mp3`;
                         
-                        // 嘗試播放檔案，失敗則用 Robot 念 "Big A"
                         let audio = new Audio(audioPath);
                         audio.play().catch(() => {
                             speakRobot(isUpper ? "Big " + char : "Small " + char);
