@@ -68,9 +68,16 @@
         }
         .exit-btn:active { transform: translateY(4px); box-shadow: none; }
 
+        /* 選單網格改為適應 5 個按鈕 */
         .menu-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;
         }
+        /* 最後一個按鈕跨兩欄置中 */
+        .menu-btn:last-child:nth-child(odd) {
+            grid-column: span 2;
+            width: 60%; margin: 0 auto;
+        }
+
         .menu-btn {
             background: rgba(255, 255, 255, 0.9); 
             border: 4px solid var(--wood);
@@ -99,6 +106,8 @@
             .game-section { max-width: 850px; height: 92vh; }
             .menu-container { max-width: 700px; }
             .menu-grid { grid-template-columns: repeat(4, 1fr); }
+            /* 橫向時第五個按鈕不需跨欄 */
+            .menu-btn:last-child:nth-child(odd) { grid-column: auto; width: 100%; }
         }
 
         .game-content {
@@ -139,7 +148,7 @@
             box-shadow: 0 5px 10px rgba(0,0,0,0.1); animation: pulse 2s infinite;
         }
 
-        /* Level 2 */
+        /* Level 2 & 5 Grid */
         .listen-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
             width: 100%; flex: 1; overflow-y: auto; padding: 5px; align-content: start; 
@@ -154,8 +163,14 @@
             display: flex; justify-content: center; align-items: center;
             border: 2px solid #dfe6e9; box-shadow: 0 3px 0 #b2bec3;
             transition: all 0.1s; aspect-ratio: 1/1; 
+            position: relative;
         }
-        .vocab-card img { width: 85%; height: 85%; object-fit: contain; }
+        
+        .vocab-card img, .vocab-card video { 
+            width: 90%; height: 90%; object-fit: contain; 
+            border-radius: 10px;
+        }
+        
         .vocab-card:active { transform: translateY(3px); box-shadow: none; }
         .correct-anim { border-color: var(--secondary) !important; background: #dff9fb; animation: bounce 0.5s; }
         
@@ -275,6 +290,10 @@
                 <div class="menu-icon">🚂</div>
                 <div>Ordering</div>
             </button>
+            <button class="menu-btn" onclick="startLevel(5)">
+                <div class="menu-icon">🎬</div>
+                <div>Actions</div>
+            </button>
         </div>
     </div>
 
@@ -301,24 +320,15 @@
         <button class="back-btn" onclick="goHome()">🏠 Menu</button>
         <div class="game-content">
             <h2 id="listen-title">Find the Picture</h2>
-            
             <div id="word-display-area">
                 <span id="target-word-text">Word</span>
                 <button id="replay-word-mini" onclick="playTargetWord()">🔊</button>
             </div>
-
             <div class="listen-grid" id="vocab-grid"></div>
-            
             <div class="control-panel">
-                <button id="play-word-btn" class="game-btn btn-primary" onclick="playTargetWord()">
-                    🔊 Play Word
-                </button>
-                <button id="play-sentence-btn" class="game-btn btn-secondary" onclick="playTargetSentence()" style="display:none;">
-                    🗣️ Play Sentence
-                </button>
-                <button id="next-listen-btn" class="game-btn btn-wood" onclick="nextListeningQuestion()" style="display:none;">
-                    Next ➡
-                </button>
+                <button id="play-word-btn" class="game-btn btn-primary" onclick="playTargetWord()">🔊 Play Word</button>
+                <button id="play-sentence-btn" class="game-btn btn-secondary" onclick="playTargetSentence()" style="display:none;">🗣️ Play Sentence</button>
+                <button id="next-listen-btn" class="game-btn btn-wood" onclick="nextListeningQuestion()" style="display:none;">Next ➡</button>
             </div>
         </div>
     </div>
@@ -357,11 +367,29 @@
         </div>
     </div>
 
+    <div id="level-5" class="game-section">
+        <img id="guide-robot" src="assets/guide.png">
+        <button class="back-btn" onclick="goHome()">🏠 Menu</button>
+        <div class="game-content">
+            <h2>Do the Action!</h2>
+            <div id="action-word-display" style="display:none; align-items:center; justify-content:center; gap:10px; margin-bottom:10px; font-size:1.5rem; font-weight:bold; color:var(--primary);">
+                <span id="action-target-text">Action</span>
+                <button onclick="playTargetWord()" style="background:var(--primary); color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;">🔊</button>
+            </div>
+            <div class="listen-grid" id="action-grid"></div>
+            <div class="control-panel">
+                <button id="play-action-btn" class="game-btn btn-primary" onclick="playTargetWord()">🔊 Play Action</button>
+                <button id="next-action-btn" class="game-btn btn-wood" onclick="nextActionQuestion()" style="display:none;">Next ➡</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('touchmove', function(e) { if (e.scale !== 1) { e.preventDefault(); } }, { passive: false });
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
 
-        const vocabData = [
+        // ★★★ 資料庫拆分 ★★★
+        const nounData = [
             { word: "Apple", img: "L1/apple.png", audio: "L1/apple.mp3", sentAudio: "L1/sentence_apple.mp3" },
             { word: "Ant",   img: "L1/ant.png",   audio: "L1/ant.mp3",   sentAudio: "L1/sentence_ant.mp3" },
             { word: "Ball",  img: "L1/ball.png",  audio: "L1/ball.mp3",  sentAudio: "L1/sentence_ball.mp3" },
@@ -369,7 +397,41 @@
             { word: "Car",   img: "L1/car.png",   audio: "L1/car.mp3",   sentAudio: "L1/sentence_car.mp3" },
             { word: "Cat",   img: "L1/cat.png",   audio: "L1/cat.mp3",   sentAudio: "L1/sentence_cat.mp3" },
             { word: "Door",  img: "L1/door.png",  audio: "L1/door.mp3",  sentAudio: "L1/sentence_door.mp3" },
-            { word: "Dog",   img: "L1/dog.png",   audio: "L1/dog.mp3",   sentAudio: "L1/sentence_dog.mp3" }
+            { word: "Dog",   img: "L1/dog.png",   audio: "L1/dog.mp3",   sentAudio: "L1/sentence_dog.mp3" },
+            { word: "Book",  img: "L1/book.png",  audio: "L1/book.mp3",  sentAudio: "L1/sentence_book.mp3" },
+            { word: "Cake",  img: "L1/cake.png",  audio: "L1/cake.mp3",  sentAudio: "L1/sentence_cake.mp3" },
+            { word: "Duck",  img: "L1/duck.png",  audio: "L1/duck.mp3",  sentAudio: "L1/sentence_duck.mp3" }
+        ];
+
+        const actionData = [
+            { 
+                word: "Look",  
+                img: "L1/action_look.mp4", 
+                audio: "L1/action_look.mp3", 
+                robotWord: "Look at me", 
+                robotSentence: "Look at me"
+            }, 
+            { 
+                word: "Close Eyes", 
+                img: "L1/action_close_eyes.mp4", 
+                audio: "L1/action_close_eyes.mp3", 
+                robotWord: "Close your eyes", 
+                robotSentence: "Close your eyes"
+            },
+            { 
+                word: "Open Door", 
+                img: "L1/action_open_door.mp4", 
+                audio: "L1/action_open_door.mp3", 
+                robotWord: "Open the door", 
+                robotSentence: "Open the door"
+            },
+            { 
+                word: "Pencil", 
+                img: "L1/action_pencil.mp4", 
+                audio: "L1/action_pencil.mp3", 
+                robotWord: "Pencil down", 
+                robotSentence: "Pencil down"
+            }
         ];
 
         let score = 0;
@@ -379,49 +441,48 @@
         let orderQCount = 0;
         let currentAudio = null;
         let isLevel2Solved = false;
+        let currentDataSet = []; // 當前使用的資料集
+        let currentLevel = 0; // 記錄目前關卡
         
         let onModalCloseCallback = null;
         const synth = window.speechSynthesis;
 
-        // ★★★ 核心：全域聲音停止器 (絕對防撞) ★★★
         function stopAllAudio() {
-            // 1. 停止 MP3
             if(currentAudio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
                 currentAudio = null;
             }
-            // 2. 停止機器人說話
             if(synth.speaking) {
                 synth.cancel();
             }
         }
 
-        // 播放 MP3 (整合了停止器)
-        function playMp3(path) {
-            stopAllAudio(); // 先安靜
-            currentAudio = new Audio(path);
-            currentAudio.playbackRate = 0.9; 
-            currentAudio.play().catch(e => console.log("Audio play failed:", e));
+        function playMp3(path, fallbackText) {
+            stopAllAudio(); 
+            let audio = new Audio(path);
+            audio.playbackRate = 0.9; 
+            
+            audio.play().catch(e => {
+                console.log("Audio not found, fallback to robot:", fallbackText);
+                if(fallbackText) speakRobot(fallbackText);
+            });
+            currentAudio = audio;
         }
 
-        // 播放好棒音效 (整合了停止器)
         function playGoodJob() {
-            stopAllAudio(); // 先安靜
+            stopAllAudio();
             let audio = new Audio("assets/good_job.mp3");
             audio.play().catch(() => speakRobot("Good Job!"));
         }
-
-        // 播放再試一次 (整合了停止器)
         function playTryAgain() {
-            stopAllAudio(); // 先安靜
+            stopAllAudio();
             let audio = new Audio("assets/try_again.mp3");
             audio.play().catch(() => speakRobot("Try Again"));
         }
 
-        // 機器人說話 (整合了停止器)
         function speakRobot(text) {
-            stopAllAudio(); // 先安靜
+            stopAllAudio();
             const utterThis = new SpeechSynthesisUtterance(text);
             utterThis.lang = 'en-US'; 
             utterThis.rate = 0.5; utterThis.pitch = 1.1;
@@ -429,7 +490,7 @@
         }
 
         function goHome() {
-            stopAllAudio(); // 切換畫面時安靜
+            stopAllAudio();
             document.querySelectorAll('.game-section').forEach(el => el.style.display = 'none');
             document.getElementById('main-menu').style.display = 'flex';
             document.querySelector('.overlay-bg').style.display = 'block';
@@ -437,14 +498,15 @@
         }
 
         function startLevel(lv) {
-            stopAllAudio(); // 進關卡時安靜
+            stopAllAudio();
             document.getElementById('main-menu').style.display = 'none';
             document.querySelector('.overlay-bg').style.display = 'none';
             document.body.style.backgroundImage = "none";
             const levelEl = document.getElementById(`level-${lv}`);
             levelEl.style.display = 'flex';
             
-            // Level 1 開場白：加強錯誤處理
+            currentLevel = lv;
+
             if(lv === 1) {
                 setTimeout(() => {
                     let audio = new Audio("L1/whats_your_name.mp3");
@@ -454,9 +516,16 @@
                     });
                 }, 1000);
             }
-            if(lv === 2) initListeningGame();
+            if(lv === 2) {
+                currentDataSet = nounData; // Level 2 用名詞
+                initListeningGame();
+            }
             if(lv === 3) initCanvas();
             if(lv === 4) initOrderingGame();
+            if(lv === 5) {
+                currentDataSet = actionData; // Level 5 用動作
+                initActionGame(); // 使用共用的邏輯，但放在新關卡
+            }
         }
 
         function addScore(points) {
@@ -497,34 +566,58 @@
             const fullSentence = `Hi, I'm ${name}.`;
             document.getElementById('sentence-display').innerText = fullSentence;
 
-            stopAllAudio(); // 確保開始講之前沒雜音
+            stopAllAudio(); 
             const utterThis = new SpeechSynthesisUtterance(fullSentence);
             utterThis.lang = 'en-US';
             utterThis.rate = 0.5; utterThis.pitch = 1.1;
-            
             synth.speak(utterThis);
         }
 
-        // --- Level 2: Listening ---
+        // --- Level 2 (Nouns) & Level 5 (Actions) Shared Logic ---
+        
         function initListeningGame() {
-            isLevel2Solved = false;
-            document.getElementById('play-sentence-btn').style.display = 'none';
-            document.getElementById('next-listen-btn').style.display = 'none';
-            document.getElementById('word-display-area').style.display = 'none';
-            document.getElementById('play-word-btn').style.display = 'flex'; 
+            setupGameUI('vocab-grid', 'play-word-btn', 'play-sentence-btn', 'next-listen-btn', 'word-display-area', 'target-word-text');
+        }
 
-            const grid = document.getElementById('vocab-grid');
+        function initActionGame() {
+            // Actions 只有一層聲音，所以不需要 sentence 按鈕
+            setupGameUI('action-grid', 'play-action-btn', null, 'next-action-btn', 'action-word-display', 'action-target-text');
+        }
+
+        function setupGameUI(gridId, playBtnId, sentBtnId, nextBtnId, displayAreaId, targetTextId) {
+            isLevel2Solved = false;
+            if(sentBtnId) document.getElementById(sentBtnId).style.display = 'none';
+            document.getElementById(nextBtnId).style.display = 'none';
+            document.getElementById(displayAreaId).style.display = 'none';
+            document.getElementById(playBtnId).style.display = 'flex'; 
+
+            const grid = document.getElementById(gridId);
             grid.innerHTML = '';
-            const shuffled = [...vocabData].sort(() => 0.5 - Math.random());
-            const options = shuffled.slice(0, 4);
+            
+            // 隨機選取
+            let options;
+            if(currentDataSet.length >= 4) {
+                const shuffled = [...currentDataSet].sort(() => 0.5 - Math.random());
+                options = shuffled.slice(0, 4);
+            } else {
+                options = [...currentDataSet]; // 如果選項少於4個，就全部顯示
+            }
             
             currentTargetWord = options[Math.floor(Math.random() * options.length)];
 
             options.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'vocab-card';
-                card.innerHTML = `<img src="${item.img}" alt="${item.word}">`;
-                card.onclick = () => checkListeningAnswer(item, card);
+                
+                if(item.img.endsWith('.mp4')) {
+                    // ★★★ 強制靜音 ★★★
+                    card.innerHTML = `<video src="${item.img}" autoplay loop muted playsinline style="pointer-events: none;"></video>`;
+                } else {
+                    card.innerHTML = `<img src="${item.img}" alt="${item.word}">`;
+                }
+                
+                // 傳遞正確的 UI ID 給 checkAnswer
+                card.onclick = () => checkListeningAnswer(item, card, playBtnId, sentBtnId, nextBtnId, displayAreaId, targetTextId);
                 grid.appendChild(card);
             });
 
@@ -533,19 +626,22 @@
 
         function playTargetWord() {
             if(!currentTargetWord) return;
-            playMp3(currentTargetWord.audio);
+            // 優先播 mp3，失敗用 robotWord
+            playMp3(currentTargetWord.audio, currentTargetWord.robotWord || currentTargetWord.word);
         }
 
         function playTargetSentence() {
             if(!currentTargetWord) return;
-            playMp3(currentTargetWord.sentAudio);
+            // Action 關卡可能沒有 sentAudio，就重播 word audio
+            let audioToPlay = currentTargetWord.sentAudio || currentTargetWord.audio;
+            let fallback = currentTargetWord.robotSentence || currentTargetWord.robotWord || currentTargetWord.word;
+            playMp3(audioToPlay, fallback);
         }
 
-        function checkListeningAnswer(item, cardElement) {
-            // 單字點讀板功能
+        function checkListeningAnswer(item, cardElement, playBtnId, sentBtnId, nextBtnId, displayAreaId, targetTextId) {
             if (isLevel2Solved) {
                 if(item.word !== currentTargetWord.word) {
-                    playMp3(item.audio); 
+                    playMp3(item.audio, item.robotWord || item.word); 
                 }
                 return;
             }
@@ -554,28 +650,36 @@
                 isLevel2Solved = true;
                 cardElement.classList.add('correct-anim');
                 
-                // 跳星星，按OK後才執行 callback (播放句子)
                 showModal(true, "Correct!", true, () => {
-                    document.getElementById('target-word-text').innerText = item.word;
-                    document.getElementById('word-display-area').style.display = 'flex'; 
-                    document.getElementById('play-word-btn').style.display = 'none'; 
-                    document.getElementById('play-sentence-btn').style.display = 'flex';
-                    document.getElementById('next-listen-btn').style.display = 'flex';
+                    document.getElementById(targetTextId).innerText = item.word;
+                    document.getElementById(displayAreaId).style.display = 'flex'; 
+                    document.getElementById(playBtnId).style.display = 'none'; 
                     
-                    playTargetSentence();
+                    if(sentBtnId) {
+                        document.getElementById(sentBtnId).style.display = 'flex';
+                        playTargetSentence(); // Level 2 播放句子
+                    } else {
+                        // Level 5 (Action) 沒有句子按鈕，直接重播動作音
+                        playTargetWord(); 
+                    }
+                    
+                    document.getElementById(nextBtnId).style.display = 'flex';
                 });
                 
                 addScore(20);
 
             } else {
-                // 答錯：只播錯誤單字 (playMp3 會自動切掉之前的 TryAgain 如果有)
-                playMp3(item.audio); 
+                playMp3(item.audio, item.robotWord || item.word); 
                 cardElement.style.opacity = '0.5';
             }
         }
 
         function nextListeningQuestion() {
             initListeningGame();
+        }
+        
+        function nextActionQuestion() {
+            initActionGame();
         }
 
         // --- Level 3: Writing ---
@@ -633,11 +737,11 @@
 
         function checkWriting() {
             addScore(10);
-            showModal(true, "Nice Writing!"); // 這裡會自動切斷 Phonics 音效
+            showModal(true, "Nice Writing!"); 
             clearCanvas();
         }
 
-        // --- Level 4: Ordering (Fix Sound Clash) ---
+        // --- Level 4: Ordering ---
         function initOrderingGame() {
             orderQCount = 1;
             generateOrderQuestion();
@@ -675,7 +779,6 @@
                         userOrderInput.push(char); updateSlots();
                         btn.style.visibility = 'hidden'; 
                         
-                        // ★★★ 關鍵修改：如果是最後一步，不播放字母音，避免與 Good Job 打架 ★★★
                         if(userOrderInput.length === 3) {
                             checkOrder();
                             return; 
@@ -683,12 +786,10 @@
 
                         checkOrder();
                         
-                        // 前兩個字才播放
                         const isUpper = char === char.toUpperCase();
                         const prefix = isUpper ? "big_" : "small_";
                         const audioPath = `L1/${prefix}${char.toLowerCase()}.mp3`;
                         
-                        // 這裡用 Audio 物件播放，但先呼叫 stopAllAudio 確保乾淨
                         stopAllAudio();
                         let audio = new Audio(audioPath);
                         audio.play().catch(() => {
