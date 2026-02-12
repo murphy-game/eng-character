@@ -68,11 +68,9 @@
         }
         .exit-btn:active { transform: translateY(4px); box-shadow: none; }
 
-        /* 選單網格改為適應 5 個按鈕 */
         .menu-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;
         }
-        /* 最後一個按鈕跨兩欄置中 */
         .menu-btn:last-child:nth-child(odd) {
             grid-column: span 2;
             width: 60%; margin: 0 auto;
@@ -106,7 +104,6 @@
             .game-section { max-width: 850px; height: 92vh; }
             .menu-container { max-width: 700px; }
             .menu-grid { grid-template-columns: repeat(4, 1fr); }
-            /* 橫向時第五個按鈕不需跨欄 */
             .menu-btn:last-child:nth-child(odd) { grid-column: auto; width: 100%; }
         }
 
@@ -148,7 +145,7 @@
             box-shadow: 0 5px 10px rgba(0,0,0,0.1); animation: pulse 2s infinite;
         }
 
-        /* Level 2 & 5 Grid */
+        /* Level 2 & 5 */
         .listen-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
             width: 100%; flex: 1; overflow-y: auto; padding: 5px; align-content: start; 
@@ -388,7 +385,6 @@
         document.addEventListener('touchmove', function(e) { if (e.scale !== 1) { e.preventDefault(); } }, { passive: false });
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
 
-        // ★★★ 資料庫拆分 ★★★
         const nounData = [
             { word: "Apple", img: "L1/apple.png", audio: "L1/apple.mp3", sentAudio: "L1/sentence_apple.mp3" },
             { word: "Ant",   img: "L1/ant.png",   audio: "L1/ant.mp3",   sentAudio: "L1/sentence_ant.mp3" },
@@ -441,8 +437,8 @@
         let orderQCount = 0;
         let currentAudio = null;
         let isLevel2Solved = false;
-        let currentDataSet = []; // 當前使用的資料集
-        let currentLevel = 0; // 記錄目前關卡
+        let currentDataSet = []; 
+        let currentLevel = 0; 
         
         let onModalCloseCallback = null;
         const synth = window.speechSynthesis;
@@ -458,15 +454,25 @@
             }
         }
 
+        // ★★★ 智慧播放器 (支援 404 立即切換機器人) ★★★
         function playMp3(path, fallbackText) {
             stopAllAudio(); 
             let audio = new Audio(path);
             audio.playbackRate = 0.9; 
             
+            // 監聽錯誤：檔案找不到時，馬上切換 Robot
+            audio.onerror = function() {
+                console.log("Audio file missing/error, calling Robot for:", fallbackText);
+                if(fallbackText) speakRobot(fallbackText);
+            };
+
+            // 嘗試播放
             audio.play().catch(e => {
-                console.log("Audio not found, fallback to robot:", fallbackText);
+                // 部分瀏覽器阻擋 Autoplay 也會進到這裡
+                console.log("Audio play prevented/failed, calling Robot:", fallbackText);
                 if(fallbackText) speakRobot(fallbackText);
             });
+            
             currentAudio = audio;
         }
 
@@ -510,21 +516,19 @@
             if(lv === 1) {
                 setTimeout(() => {
                     let audio = new Audio("L1/whats_your_name.mp3");
-                    audio.play().catch((e) => {
-                        console.log("No file found, robot speaking.");
-                        speakRobot("What's your name?");
-                    });
+                    audio.onerror = () => speakRobot("What's your name?");
+                    audio.play().catch(() => speakRobot("What's your name?"));
                 }, 1000);
             }
             if(lv === 2) {
-                currentDataSet = nounData; // Level 2 用名詞
+                currentDataSet = nounData; 
                 initListeningGame();
             }
             if(lv === 3) initCanvas();
             if(lv === 4) initOrderingGame();
             if(lv === 5) {
-                currentDataSet = actionData; // Level 5 用動作
-                initActionGame(); // 使用共用的邏輯，但放在新關卡
+                currentDataSet = actionData; 
+                initActionGame(); 
             }
         }
 
@@ -580,7 +584,6 @@
         }
 
         function initActionGame() {
-            // Actions 只有一層聲音，所以不需要 sentence 按鈕
             setupGameUI('action-grid', 'play-action-btn', null, 'next-action-btn', 'action-word-display', 'action-target-text');
         }
 
@@ -594,13 +597,12 @@
             const grid = document.getElementById(gridId);
             grid.innerHTML = '';
             
-            // 隨機選取
             let options;
             if(currentDataSet.length >= 4) {
                 const shuffled = [...currentDataSet].sort(() => 0.5 - Math.random());
                 options = shuffled.slice(0, 4);
             } else {
-                options = [...currentDataSet]; // 如果選項少於4個，就全部顯示
+                options = [...currentDataSet]; 
             }
             
             currentTargetWord = options[Math.floor(Math.random() * options.length)];
@@ -609,14 +611,14 @@
                 const card = document.createElement('div');
                 card.className = 'vocab-card';
                 
+                // ★★★ 影片靜音修正 ★★★
                 if(item.img.endsWith('.mp4')) {
-                    // ★★★ 強制靜音 ★★★
-                    card.innerHTML = `<video src="${item.img}" autoplay loop muted playsinline style="pointer-events: none;"></video>`;
+                    // muted="true" 確保靜音
+                    card.innerHTML = `<video src="${item.img}" autoplay loop muted playsinline style="pointer-events: none; width:90%; height:90%; object-fit:contain; border-radius:10px;"></video>`;
                 } else {
                     card.innerHTML = `<img src="${item.img}" alt="${item.word}">`;
                 }
                 
-                // 傳遞正確的 UI ID 給 checkAnswer
                 card.onclick = () => checkListeningAnswer(item, card, playBtnId, sentBtnId, nextBtnId, displayAreaId, targetTextId);
                 grid.appendChild(card);
             });
@@ -626,13 +628,11 @@
 
         function playTargetWord() {
             if(!currentTargetWord) return;
-            // 優先播 mp3，失敗用 robotWord
             playMp3(currentTargetWord.audio, currentTargetWord.robotWord || currentTargetWord.word);
         }
 
         function playTargetSentence() {
             if(!currentTargetWord) return;
-            // Action 關卡可能沒有 sentAudio，就重播 word audio
             let audioToPlay = currentTargetWord.sentAudio || currentTargetWord.audio;
             let fallback = currentTargetWord.robotSentence || currentTargetWord.robotWord || currentTargetWord.word;
             playMp3(audioToPlay, fallback);
@@ -657,9 +657,9 @@
                     
                     if(sentBtnId) {
                         document.getElementById(sentBtnId).style.display = 'flex';
-                        playTargetSentence(); // Level 2 播放句子
+                        playTargetSentence(); 
                     } else {
-                        // Level 5 (Action) 沒有句子按鈕，直接重播動作音
+                        // Level 5: 重播動作音
                         playTargetWord(); 
                     }
                     
@@ -723,7 +723,7 @@
             });
             clearCanvas();
             const lowerChar = char.toLowerCase();
-            playMp3(`L1/phonics_${lowerChar}.mp3`);
+            playMp3(`L1/phonics_${lowerChar}.mp3`, lowerChar);
         }
 
         function drawGuide(char) {
@@ -790,11 +790,8 @@
                         const prefix = isUpper ? "big_" : "small_";
                         const audioPath = `L1/${prefix}${char.toLowerCase()}.mp3`;
                         
-                        stopAllAudio();
-                        let audio = new Audio(audioPath);
-                        audio.play().catch(() => {
-                            speakRobot(isUpper ? "Big " + char : "Small " + char);
-                        });
+                        // 嘗試播放檔案，失敗則用 Robot 念 "Big A"
+                        playMp3(audioPath, isUpper ? "Big " + char : "Small " + char);
                     }
                 };
                 pool.appendChild(btn);
